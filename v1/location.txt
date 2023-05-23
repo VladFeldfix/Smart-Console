@@ -1,0 +1,1 @@
+HOME "C:\Users\HP User\AppData\Local\Programs\Python\Python311\Lib\SmartConsole.py"
