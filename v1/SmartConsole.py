@@ -290,6 +290,43 @@ class SmartConsole:
                     self.fatal_error("In file: "+path+"\nLine #"+str(ln)+": "+original+"\nIncorrect number of columns")
         return return_value
 
+    # SCRIPT
+    def run_script(self, path, functions):
+        self.test_path(path)
+        file = open(path, 'r')
+        lines = file.readlines()
+        file.close()
+
+        ln = 0
+        for line in lines:
+            ln += 1
+            if len(line) > 0:
+                line = line.replace("\n", "")
+                if "(" in line and ")" in line:
+                    # get function name
+                    tmp = line.split("(")
+                    function = tmp[0].strip()
+
+                    # get arguments
+                    if len(tmp) == 2:
+                        tmp = tmp[1].replace(")", "")
+                        tmp = tmp.split(",")
+                        agruments = []
+                        for r in tmp:
+                            agruments.append(r.strip())
+                        
+                        # activate function
+                        if function in functions:
+                            if len(agruments) == functions[function][1]:
+                                functions[function][0](agruments)
+                            else:
+                                self.fatal_error("In script: "+path+"\nLine #"+str(ln)+" "+line+"\nWrong number of arguments!\nGiven: "+str(len(agruments))+"\nExpected: "+str(functions[function][1]))
+                        else:
+                            self.fatal_error("In script: "+path+"\nLine #"+str(ln)+" "+line+"\nUnknown function: "+function)
+                    else:
+                        self.fatal_error("In script: "+path+"\nLine #"+str(ln)+" "+line+"\nSyntex error. Expected syntex: FUNCTION( ARGUMENT0, ARGUMENT1, ARGUMENT2, ... )")
+                else:
+                    self.fatal_error("In script: "+path+"\nLine #"+str(ln)+" "+line+"\n'(' and ')' expected")
     # DATE
     def today(self):
         # get today
