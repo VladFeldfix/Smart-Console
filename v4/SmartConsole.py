@@ -123,26 +123,30 @@ class SmartConsole:
         file.close()
         script = []
         ln = 0
-        if len(line) > 0:
+        if len(lines) > 0:
             for line in lines:
                 ln += 1
                 line = line.replace("\n", "")
-                tmp = line.split("(")
-                if len(tmp) == 2:
-                    function_name = tmp[0]
-                    arguments = tmp[1]
-                    if function_name in functions:
-                        function = functions[function_name][0]
-                        arguments = arguments.replace(")", "")
-                        arguments = arguments.split(",")
-                        if len(arguments) == functions[function_name][1]:
-                            script.append((function, arguments))
+                if len(line) > 0:
+                    tmp = line.split("(")
+                    if len(tmp) == 2:
+                        function_name = tmp[0].strip()
+                        arguments = tmp[1]
+                        if function_name in functions:
+                            function = functions[function_name][0]
+                            arguments = arguments.replace(")", "")
+                            arguments = arguments.split(",")
+                            args = []
+                            for arg in arguments:
+                                args.append(arg.strip())
+                            if len(args) == functions[function_name][1]:
+                                script.append((function, args))
+                            else:
+                                self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\n"+line+"\nExpected "+str(functions[function_name][1])+" arguments"+"\nGiven "+str(len(args))+" arguments")
                         else:
-                            self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\nExpected "+str(functions[function_name][1])+" arguments"+"\nGiven "+str(len(arguments))+" arguments")
+                            self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\n"+line+"\nUnknown function: "+function_name)
                     else:
-                        self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\nUnknown function: "+function_name)
-                else:
-                    self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\nSyntax error")
+                        self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\n"+line+"\nSyntax error")
             for line in script:
                 line[0](line[1])
         else:
