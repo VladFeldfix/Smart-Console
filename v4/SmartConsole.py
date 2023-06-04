@@ -62,8 +62,26 @@ class SmartConsole:
         while not ans in ("Y", "N"):
             ans = self.input(text+" [Y/N]").upper()
             if not ans in ("Y", "N"):
-                self.error("Invalid answer!")
+                self.error("Invalid input")
         return ans == "Y"
+    
+    def choose(self, text, options):
+        self.print(text)
+        item = 0
+        for op in options:
+            item += 1
+            self.print(str(item)+". "+op)
+        ans = ""
+        while not ans in range(1, item+1):
+            ans = self.input("Select your option")
+            try:
+                ans = int(ans)
+            except:
+                ans = 0
+            if not ans in range(1, item+1):
+                self.error("Invalid input")
+        return options[ans-1]
+        
 
     # OUTPUT
     def print(self, text):
