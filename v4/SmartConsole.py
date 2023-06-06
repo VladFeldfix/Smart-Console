@@ -116,6 +116,7 @@ class SmartConsole:
     
     def open_settings(self):
         os.popen("settings.txt")
+        self.restart()
 
     def get_setting(self, var):
         if var in self.__loaded_settings:
@@ -179,7 +180,7 @@ class SmartConsole:
             for val in values:
                 valstowrite += val+","
             valstowrite = valstowrite[:-1]
-            file.write(key+","+valstowrite+"\n")
+            file.write(str(key)+","+valstowrite+"\n")
         file.close()
 
     def load_database(self, path, headers):
