@@ -3,6 +3,8 @@ import sys
 import datetime
 from datetime import date as date_n
 import re
+import subprocess
+
 class SmartConsole:
     # CONSTRUCTOR
     def __init__(self, name, version):
@@ -134,6 +136,19 @@ class SmartConsole:
         if not os.path.isdir(path) and not os.path.isfile(path):
             self.fatal_error("Missing path: "+path)
     
+    def open_folder(self, path):
+        FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
+        cmd = os.path.normpath(path)
+        subprocess.run([FILEBROWSER_PATH, cmd])
+    
+    def load_csv(self, path, headers):
+        return_value = []
+        file = open(path, 'r')
+        lines = file.readlines()
+        file.close()
+
+        for line in lines:
+            line = line
     # SCRIPT
     def run_script(self, path, functions):
         self.test_path(path)
