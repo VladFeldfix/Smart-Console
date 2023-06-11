@@ -141,14 +141,20 @@ class SmartConsole:
         cmd = os.path.normpath(path)
         subprocess.run([FILEBROWSER_PATH, cmd])
     
-    def load_csv(self, path, headers):
+    def load_csv(self, path):
+        self.test_path(path)
         return_value = []
         file = open(path, 'r')
         lines = file.readlines()
         file.close()
 
         for line in lines:
-            line = line
+            line = line.replace("\n", "")
+            line = line.split(",")
+            row = []
+            for column in line:
+                row.append(column.strip())
+            return_value.append(row)
     # SCRIPT
     def run_script(self, path, functions):
         self.test_path(path)
