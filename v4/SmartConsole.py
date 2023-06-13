@@ -155,6 +155,7 @@ class SmartConsole:
             for column in line:
                 row.append(column.strip())
             return_value.append(row)
+        return return_value
     # SCRIPT
     def run_script(self, path, functions):
         self.test_path(path)
