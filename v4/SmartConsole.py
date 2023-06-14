@@ -156,6 +156,17 @@ class SmartConsole:
                 row.append(column.strip())
             return_value.append(row)
         return return_value
+    
+    def save_csv(self, path, data):
+        file = open(path, 'w', encoding='utf-8')
+        for row in data:
+            new_line = ""
+            for column in row:
+                new_line += str(column)+","
+            new_line[:-1]
+            file.write(new_line+"\n")
+        file.close()
+
     # SCRIPT
     def run_script(self, path, functions):
         self.test_path(path)
@@ -179,8 +190,9 @@ class SmartConsole:
                             arguments = arguments.split(",")
                             args = []
                             for arg in arguments:
-                                args.append(arg.strip())
-                            if len(args) == functions[function_name][1]:
+                                if arg != "":
+                                    args.append(arg.strip())
+                            if len(args) == len(functions[function_name][1]):
                                 script.append((function, args))
                             else:
                                 self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\n"+line+"\nExpected "+str(functions[function_name][1])+" arguments"+"\nGiven "+str(len(args))+" arguments")
@@ -191,7 +203,7 @@ class SmartConsole:
             for line in script:
                 line[0](line[1])
         else:
-            self.fatal_error("IN SCRIPT: "+path+"\nEmpty script")
+            self.fatal_error("in script: "+path+"\nEmpty script")
 
     # DATABASES
     def save_database(self, path, data):
@@ -235,6 +247,14 @@ class SmartConsole:
         else:
             ln += 1
             self.fatal_error("in file: "+path+"\nIn line #"+str(ln)+"\nFile is empty")
+        return return_value
+
+    def invert_database(self, database):
+        return_value = {}
+        for key, value in database.items():
+            if type(key) != str and type(key) != int:
+                key = str(key)
+            return_value[value] = key
         return return_value
 
     # DATE
