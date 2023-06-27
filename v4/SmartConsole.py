@@ -9,7 +9,8 @@ class SmartConsole:
     # CONSTRUCTOR
     def __init__(self, name, version):
         self.title = name+" v"+version
-        self.main_menu = {}
+        self.main_menu = []
+        self.all_menu_functions = {}
         self.__load_settings()
         self.test_path("help.pdf")
 
@@ -24,16 +25,18 @@ class SmartConsole:
         self.print("---"+"-"*len(self.title)+"---")
 
         # display main menu
-        self.main_menu["SETTINGS"] = self.open_settings
-        self.main_menu["HELP"] = self.help
-        self.main_menu["EXIT"] = self.exit
+        self.add_main_menu_item("SETTINGS", self.open_settings)
+        self.add_main_menu_item("HELP", self.help)
+        self.add_main_menu_item("EXIT", self.exit)
         self.print("MAIN MENU:")
         item = 0
         options = {}
-        for key, value in self.main_menu.items():
+        for name_function in self.main_menu:
+            name = name_function[0]
+            function = name_function[1]
             item += 1
-            self.print(str(item)+". "+key)
-            options[str(item)] = value
+            self.print(str(item)+". "+name)
+            options[str(item)] = function
         
         # get input
         ans = self.input("Insert your choice")
@@ -54,6 +57,12 @@ class SmartConsole:
         os._exit(1)
         sys.exit()
     
+    # MAIN MENU
+    def add_main_menu_item(self, name, function):
+        if not name in self.all_menu_functions:
+            self.all_menu_functions[name] = function
+            self.main_menu.append((name, function))
+
     # INPUT
     def input(self, text):
         ans = input(text+" >")
