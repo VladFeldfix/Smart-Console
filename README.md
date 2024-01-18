@@ -5,6 +5,7 @@
   <li>name - The name of the application</li>
   <li>version - The version of the application</li>
 </ol>
+<h2>FLOW</h2>
 <b>start()</b>
 <ol>
   <li>Start the application displaying the application header, version, and main menu</li>
@@ -17,11 +18,13 @@
 <ol>
   <li>Exits the application</li>
 </ol>
+<h2>MAIN MENU</h2>
 <b>add_main_menu_item(name, function)</b>
 <ol>
   <li>name - The name of the function for example: "RUN"</li>
   <li>function - The function to call when this menu item is selected. For example: self.run</li>
 </ol>
+<h2>INPUT</h2>
 <b>input(text)</b>
 <ol>
   <li>text - The prompt of the input</li>
@@ -38,6 +41,7 @@
   <li>options - A list of possible options</li>
   <li>RETURN VALUE: The number of the selected option</li>
 </ol>
+<h2>OUTPUT</h2>
 <b>print(text)</b>
 <ol>
   <li>text - The text to display</li>
@@ -54,6 +58,7 @@
 <ol>
   <li>Draws a horizontal line</li>
 </ol>
+<h2>SETTINGS</h2>
 <b>open_settings()</b>
 <ol>
   <li>Opens "settings.txt" to edit</li>
@@ -63,10 +68,12 @@
   <li>var - the name of the setting</li>
   <li>RETURN VALUE: The value of the given setting</li>
 </ol>
+<h2>HELP</h2>
 <b>help()</b>
 <ol>
   <li>Displays the help file "help.pdf"</li>
 </ol>
+<h2>FILE HANDLER</h2>
 <b>test_path(path)</b>
 <ol>
   <li>path - Throws a fatal error if the given path is missing</li>
@@ -84,4 +91,10 @@
 <ol>
   <li>path - The location of the .csv file to save</li>
   <li>data - a list to be saved as a .csv file</li>
+</ol>
+<h2>SCRIPT</h2>
+<b>run_script(path, functions)</b>
+<ol>
+  <li>path - The location of the script file to read</li>
+  <li>functions - a directory of functions to activate. For example: {"START": (self.start, ("Argument0", "Argument1", "Argument3") ) }</li>
 </ol>
