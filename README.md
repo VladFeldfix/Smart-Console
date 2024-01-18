@@ -98,3 +98,36 @@
   <li>path - The location of the script file to read</li>
   <li>functions - a directory of functions to activate. For example:<br>{"START": (self.start, ("Argument0", "Argument1", "Argument3") ) }</li>
 </ol>
+<h2>DATABASES</h2>
+<b>save_database(path, data)</b>
+<ol>
+  <li>path - The location of the file to save</li>
+  <li>data - a directory</li>
+</ol>
+<b>load_database(path, headers)</b>
+<ol>
+  <li>path - The location of the file to load</li>
+  <li>headers - the headers of the directory</li>
+</ol>
+<b>invert_database(database)</b>
+<ol>
+  <li>database - a directory to invert</li>
+  <li>RETURN VALUE: the inverted version of the given directory</li>
+</ol>
+<h2>DATE</h2>
+<b>today()</b>
+<ol>
+  <li>Returns today's date</li>
+  <li>RETURN VALUE: today's date in format: YYYY-MM-DD</li>
+</ol>
+<b>test_date(givenDate)</b>
+<ol>
+  <li>givenDate - a text in the format YYYY-MM-DD</li>
+  <li>RETURN VALUE: True or False that the given text is in the following date format: YYYY-MM-DD</li>
+</ol>
+<b>compare_dates(firstDate, secondDate)</b>
+<ol>
+  <li>firstDate - a text in the format YYYY-MM-DD</li>
+  <li>secondDate - a text in the format YYYY-MM-DD</li>
+  <li>RETURN VALUE: The number of days between firstDate to secondDate</li>
+</ol>
