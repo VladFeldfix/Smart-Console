@@ -96,5 +96,5 @@
 <b>run_script(path, functions)</b>
 <ol>
   <li>path - The location of the script file to read</li>
-  <li>functions - a directory of functions to activate. For example: {"START": (self.start, ("Argument0", "Argument1", "Argument3") ) }</li>
+  <li>functions - a directory of functions to activate. For example:<br>{"START": (self.start, ("Argument0", "Argument1", "Argument3") ) }</li>
 </ol>
