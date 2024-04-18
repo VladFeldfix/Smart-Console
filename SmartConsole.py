@@ -4,6 +4,7 @@ import datetime
 from datetime import date as date_n
 import re
 import subprocess
+from termcolor import colored
 
 class SmartConsole:
     # CONSTRUCTOR
@@ -20,9 +21,9 @@ class SmartConsole:
         os.system('cls')
 
         # display title
-        self.print("---"+"-"*len(self.title)+"---")
-        self.print("-- "+self.title+" --")
-        self.print("---"+"-"*len(self.title)+"---")
+        self.print("---"+"-"*len(self.title)+"---", 'black', 'on_white')
+        self.print("-- "+self.title+" --", 'black', 'on_white')
+        self.print("---"+"-"*len(self.title)+"---", 'black', 'on_white')
 
         # display main menu
         self.add_main_menu_item("SETTINGS", self.open_settings)
@@ -65,7 +66,7 @@ class SmartConsole:
 
     # INPUT
     def input(self, text):
-        ans = input(text+" >")
+        ans = input(colored(text+" >", 'magenta'))
         return ans
     
     def question(self, text):
@@ -95,16 +96,33 @@ class SmartConsole:
         
 
     # OUTPUT
-    def print(self, text):
-        print(text)
+    def print(self, *args):
+        txt = ""
+        col = "white"
+        txt = args[0]
+        if len(args) == 1:
+            print(txt)
+        if len(args) == 2:
+            col = args[1]
+            print(colored(txt, col))
+        if len(args) == 3:
+            col = args[1]
+            mark = args[2]
+            print(colored(txt, col, mark))
 
     def error(self, text):
-        self.print("ERROR "+text)
+        self.print("[X] ERROR "+text, "red")
     
     def fatal_error(self, text):
-        self.print("ERROR! "+text)
+        self.print("[X] ERROR! "+text, "white", "on_red")
         self.exit()
     
+    def good(self, text):
+        self.print("[+] "+text, 'green')
+
+    def warning(self, text):
+        self.print("[!] WARNING "+text, 'yellow')
+
     def hr(self):
         self.print("-"*100)
     
