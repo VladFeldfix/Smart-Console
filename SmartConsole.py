@@ -5,6 +5,7 @@ from datetime import date as date_n
 import re
 import subprocess
 from termcolor import colored
+os.system('cls')
 
 class SmartConsole:
     # CONSTRUCTOR
@@ -21,9 +22,9 @@ class SmartConsole:
         os.system('cls')
 
         # display title
-        self.print("---"+"-"*len(self.title)+"---", 'black', 'on_white')
-        self.print("-- "+self.title+" --", 'black', 'on_white')
-        self.print("---"+"-"*len(self.title)+"---", 'black', 'on_white')
+        self.print("---"+"-"*len(self.title)+"---", 'cyan')
+        self.print("-- "+self.title+" --", 'cyan')
+        self.print("---"+"-"*len(self.title)+"---", 'cyan')
 
         # display main menu
         self.add_main_menu_item("SETTINGS", self.open_settings)
@@ -114,7 +115,7 @@ class SmartConsole:
         self.print("[X] ERROR "+text, "red")
     
     def fatal_error(self, text):
-        self.print("[X] ERROR! "+text, "white", "on_red")
+        self.print("[X] FATAL ERROR! "+text, "white", "on_red")
         self.exit()
     
     def good(self, text):
