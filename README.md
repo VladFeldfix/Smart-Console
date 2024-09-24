@@ -49,6 +49,14 @@
 <ol>
   <li>text - The text to display</li>
 </ol>
+<b>good(text)</b>
+<ol>
+  <li>text - The text of the good message to display</li>
+</ol>
+<b>warning(text)</b>
+<ol>
+  <li>text - The text of the warning message to display</li>
+</ol>
 <b>error(text)</b>
 <ol>
   <li>text - The text of the error to display</li>
