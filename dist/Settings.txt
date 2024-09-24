@@ -1,2 +1,0 @@
-Script location > script
-Output location > output
