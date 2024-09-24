@@ -1,4 +1,7 @@
 <h1>Smart-Console</h1>
+<h2>INSTALLATION</h2>
+<p>Download Smart-Console.py and put it to your Python folder</p>
+<p>Typically something like: C:\Python310\Lib\SmartConsole.py</p>
 <h2>CONSTRUCTOR</h2>
 <b>__init__(name, version)</b>
 <ol>
