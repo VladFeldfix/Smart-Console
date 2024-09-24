@@ -1,2 +1,0 @@
-C:\Users\HP User\AppData\Local\Programs\Python\Python311\Lib/SmartConsole.py
-C:\Python310\Lib\SmartConsole.py
