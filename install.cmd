@@ -1,0 +1,1 @@
+pyinstaller --onefile Example-Program.py

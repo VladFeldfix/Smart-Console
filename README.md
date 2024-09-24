@@ -42,7 +42,7 @@
 <ol>
   <li>text - The prompt of the displayed menu</li>
   <li>options - A list of possible options</li>
-  <li>RETURN VALUE: The number of the selected option</li>
+  <li>RETURN VALUE: The text of the selected option</li>
 </ol>
 <h2>OUTPUT</h2>
 <b>print(text)</b>
