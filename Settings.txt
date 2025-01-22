@@ -1,2 +1,0 @@
-Script location > C:\Users\mig_rprod\Desktop\Tools\Smart-Console\script\script.txt
-Output location > C:\Users\mig_rprod\Desktop\Tools\Smart-Console\output
