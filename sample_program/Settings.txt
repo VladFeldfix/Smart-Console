@@ -1,0 +1,2 @@
+Script location > script\script.txt
+Output location > output
