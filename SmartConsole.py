@@ -135,7 +135,7 @@ class SmartConsole:
             self.fatal_error("Missing file settings.txt")
         else:
             self.__loaded_settings = {}
-            file = open("settings.txt", encoding="utf-8")
+            file = open("settings.txt")
             lines = file.readlines()
             file.close()
             for line in lines:
