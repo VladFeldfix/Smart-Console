@@ -16,6 +16,7 @@ class SmartConsole:
         self.all_menu_functions = {}
         self.__load_settings()
         self.test_path("help.pdf")
+        self.test_path("software version history.pdf")
 
     # FLOW
     def start(self):
@@ -30,6 +31,7 @@ class SmartConsole:
         # display main menu
         self.add_main_menu_item("SETTINGS", self.open_settings)
         self.add_main_menu_item("HELP", self.help)
+        self.add_main_menu_item("SOFTWARE VERSION HISTORY", self.svh)
         self.add_main_menu_item("EXIT", self.exit)
         self.print("MAIN MENU:")
         item = 0
@@ -135,7 +137,7 @@ class SmartConsole:
             self.fatal_error("Missing file settings.txt")
         else:
             self.__loaded_settings = {}
-            file = open("settings.txt")
+            file = open("settings.txt", encoding='utf-8')
             lines = file.readlines()
             file.close()
             for line in lines:
@@ -155,11 +157,15 @@ class SmartConsole:
         else:
             self.fatal_error("Missing setting: "+var)
 
-    # HELP
+    # INFO
     def help(self):
         os.popen("help.pdf")
         self.restart()
     
+    def svh(self):
+        os.popen("software version history.pdf")
+        self.restart()
+        
     # FILE HANDLER
     def test_path(self, path):
         if not os.path.isdir(path) and not os.path.isfile(path):
