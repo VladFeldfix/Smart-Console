@@ -149,7 +149,8 @@ class SmartConsole:
     
     def open_settings(self):
         os.popen("settings.txt")
-        self.restart()
+        self.print("Restarting the app to initiate new settings")
+        self.exit()
 
     def get_setting(self, var):
         if var in self.__loaded_settings:
