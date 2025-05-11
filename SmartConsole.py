@@ -11,7 +11,9 @@ os.system('cls')
 class SmartConsole:
     # CONSTRUCTOR
     def __init__(self, name, version):
-        self.title = name+" v"+version
+        self.smart_console_version = "6"
+        self.software_version = version
+        self.title = name+" v"+self.software_version+"."+self.smart_console_version
         self.main_menu = []
         self.all_menu_functions = {}
         self.__load_settings()
