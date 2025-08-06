@@ -49,11 +49,15 @@ class SmartConsole:
         ans = self.input("Insert your choice")
         if ans in options:
             self.hr()
+            self.SELECTED_MAIN_MENU_ITEM = ans
             options[ans]()
         else:
             self.error("Invalid selection")
             self.restart()
             return
+    
+    def selected_main_menu_item(self):
+        return int(self.SELECTED_MAIN_MENU_ITEM)
     
     def restart(self):
         self.input("Press ENTER to restart")
