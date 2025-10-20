@@ -1,4 +1,3 @@
-# region private
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
@@ -6,24 +5,76 @@ import os
 import subprocess
 import platform
 
-COLOR1 = ""
-COLOR2 = ""
-COLOR3 = ""
-COLOR4 = ""
-COLOR5 = ""
+# region OBJ COLOR PACK
+class color_pack:
+    def __init__(self, color):
+        colors = {}
+        colors["RED"] = "#ba4b43"
+        colors["YELLOW"] = "#bab643"
+        colors["GREEN"] = "#34ad6f"
+        colors["BLUE"] = "#43a4ba"
+        colors["PURPLE"] = "#8543ba"
+        colors["PINK"] = "#b443ba"
+        colors["BROWN"] = "#ba7d43"
+        colors["GREY"] = "#8f8f8f"
+        self.COLOR_MAIN = colors[color]
+        self.COLOR_BACKGROUND = self.adjust_brightness(self.COLOR_MAIN, 0.3)
+        self.COLOR_MSG_USER = self.invert_hex(self.COLOR_MAIN)
+        self.COLOR_MSG_APP = self.adjust_brightness(self.COLOR_MAIN, 1.2)
+        self.COLOR_OUTER_MENU = self.adjust_brightness(self.COLOR_MAIN, 5.0)
+    
+    def adjust_brightness(self, hex_color, factor):
+        """
+        Adjust brightness of a hex color.
+        :param hex_color: str, color in hex format (e.g. "#33cc99")
+        :param factor: float, >1.0 to lighten, <1.0 to darken
+        :return: str, adjusted hex color
+        """
+        # Remove '#' if present
+        hex_color = hex_color.lstrip('#')
+        
+        # Convert to RGB
+        r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        
+        # Apply factor and clamp values between 0–255
+        r = max(0, min(255, int(r * factor)))
+        g = max(0, min(255, int(g * factor)))
+        b = max(0, min(255, int(b * factor)))
+        
+        # Return new hex color
+        return f"#{r:02x}{g:02x}{b:02x}"
 
+    def invert_hex(self, hex_color):
+        """
+        Invert a HEX color.
+        Example: #123456 -> #edcba9
+        """
+        # Remove "#" if present
+        hex_color = hex_color.lstrip('#')
+
+        # Parse to integer
+        value = int(hex_color, 16)
+
+        # Invert and ensure 6 hex digits
+        inverted = 0xFFFFFF - value
+
+        return f"#{inverted:06x}"
+# endregion
+# region OBJ CHAT BUBBLE
 class ChatBubble(tk.Frame):
     """A single chat bubble widget."""
-    def __init__(self, master, message, sender="User"):
+    def __init__(self, master, message, color_pack, sender="User"):
         super().__init__(master, bg=master["bg"])
 
         # Style colors
         if sender == "User":
-            bg_color = "#DCF8C6"   # WhatsApp green bubble
+            bg_color = color_pack.COLOR_MSG_USER   # WhatsApp green bubble
+            timestamp_color = color_pack.COLOR_MSG_APP
             anchor = "e"
             padx = (50, 10)
         else:
-            bg_color = "#EAEAEA"   # WhatsApp gray bubble
+            bg_color = color_pack.COLOR_MSG_APP  # WhatsApp gray bubble
+            timestamp_color = color_pack.COLOR_MSG_USER
             anchor = "w"
             padx = (10, 50)
 
@@ -51,10 +102,11 @@ class ChatBubble(tk.Frame):
             text=time_str,
             font=("Arial", 8),
             bg=bg_color,
-            fg="gray"
+            fg=timestamp_color
         )
         time_label.pack(anchor="e", padx=8, pady=(0, 3))
-
+# endregion
+# region OBJ DATABASE
 class Database:
     def __init__(self, name: str, path: str, headers: tuple):
         self.data = {}
@@ -62,6 +114,7 @@ class Database:
         self.full_path = self.path+"/"+name+".csv"
         self.headers = headers
         self.name = name
+        self.error = None
         self.create()
     
     def create(self):
@@ -70,10 +123,13 @@ class Database:
             for column in self.headers:
                 header += column+","
             header = header[:-1]
-            file = open(self.full_path, 'w')
-            file.write(header+"\n")
-            file.close()
-        
+            try:
+                file = open(self.full_path, 'w')
+                file.write(header+"\n")
+                file.close()
+            except Exception as e:
+                self.error = str(e)
+            
         self.load_data()
     
     def load_data(self):
@@ -111,9 +167,13 @@ class Database:
             txt = txt[:-1]
             file.write(pk+","+txt+"\n")
         file.close()
-
+# endregion
+# region OBJ SC
 class SmartConsole:
-    def __init__(self, application_name, application_rev, info):
+    def __init__(self, application_name, application_rev, info, color):
+        # theme color
+        self.color_pack = color_pack(color)
+
         # vars
         self.main_menu_items = {}
         self.application_name = application_name
@@ -123,40 +183,49 @@ class SmartConsole:
         self.databases = {}
         self.log = []
         self.log_headers = []
+        self.allow_empty_message = False
 
         # gui
         self.root = tk.Tk()
         self.root.title(self.application_name+" v"+self.application_rev)
         self.root.geometry("400x600")
-        self.root.configure(bg="#ECE5DD")
+        self.root.configure(bg=self.color_pack.COLOR_OUTER_MENU)
         self.root.resizable(False, False)
         self.root.protocol("WM_DELETE_WINDOW", self.__exit)
+        self.root.iconbitmap("favicon.ico")
         self.byebye = False
 
         # Top bar (like WhatsApp header)
-        header = tk.Frame(self.root, bg="#075E54", height=50)
+        header = tk.Frame(self.root, bg=self.color_pack.COLOR_MAIN, height=50)
         header.pack(fill=tk.X)
 
         tk.Label(
             header,
             text=self.application_name+" v"+self.application_rev,
-            bg="#075E54",
+            bg=self.color_pack.COLOR_MAIN,
             fg="white",
             font=("Arial", 14, "bold")
         ).pack(side=tk.LEFT, padx=15, pady=10)
 
         # Chat area
-        self.chat_frame = tk.Frame(self.root, bg="#ECE5DD")
+        self.chat_frame = tk.Frame(self.root, bg=self.color_pack.COLOR_BACKGROUND)
         self.chat_frame.pack(fill=tk.BOTH, expand=True)
         
         # Progress Bar
-        self.progress_bar = ttk.Progressbar(self.root, orient="horizontal", mode="determinate")
+        style = ttk.Style(self.root)
+        style.theme_use("clam")
+        style.configure(
+            "Custom.Horizontal.TProgressbar",
+            troughcolor=self.color_pack.COLOR_BACKGROUND,   # background track color
+            background=self.color_pack.COLOR_MAIN  # progress bar color
+        )
+        self.progress_bar = ttk.Progressbar(self.root, orient="horizontal", mode="determinate", style="Custom.Horizontal.TProgressbar",)
         self.progress_bar.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
         
         # Scrollbar
-        self.canvas = tk.Canvas(self.chat_frame, bg="#ECE5DD", highlightthickness=0)
+        self.canvas = tk.Canvas(self.chat_frame, bg=self.color_pack.COLOR_BACKGROUND, highlightthickness=0)
         self.scrollbar = tk.Scrollbar(self.chat_frame, command=self.canvas.yview)
-        self.scrollable_frame = tk.Frame(self.canvas, bg="#ECE5DD")
+        self.scrollable_frame = tk.Frame(self.canvas, bg=self.color_pack.COLOR_BACKGROUND)
 
         self.scrollable_frame.bind(
             "<Configure>",
@@ -173,14 +242,15 @@ class SmartConsole:
         self.canvas.bind("<Configure>", self.__update_frame_width)
 
         # Input bar
-        self.input_frame = tk.Frame(self.root, bg="#FFFFFF", height=50)
+        self.input_frame = tk.Frame(self.root, bg=self.color_pack.COLOR_OUTER_MENU, height=50)
         self.input_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
         self.entry = tk.Entry(
             self.input_frame,
             font=("Arial", 12),
             relief="flat",
-            bg="#FFFFFF"
+            bg=self.color_pack.COLOR_OUTER_MENU,
+            disabledbackground=self.color_pack.COLOR_OUTER_MENU
         )
         self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 5), pady=10)
         self.entry.focus()
@@ -190,7 +260,7 @@ class SmartConsole:
             self.input_frame,
             text="Send",
             font=("Arial", 11, "bold"),
-            bg="#25D366",
+            bg=self.color_pack.COLOR_MAIN,
             fg="white",
             relief="flat",
         )
@@ -209,7 +279,7 @@ class SmartConsole:
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
     def __add_message(self, message, sender="User"):
-        bubble = ChatBubble(self.scrollable_frame, message, sender)
+        bubble = ChatBubble(self.scrollable_frame, message, self.color_pack, sender)
         bubble.pack(fill=tk.X, anchor="e" if sender == "User" else "w")
         self.root.update_idletasks()
         self.canvas.yview_moveto(1.0)
@@ -272,9 +342,7 @@ class SmartConsole:
             os._exit(0)
             self.root.destroy()
         self.root.after(2000, close_program)
-# endregion
-# region public
-    # region SETUP
+
     def add_main_menu_item(self, function_name:str, function):
         self.main_menu_items[function_name] = function
 
@@ -314,7 +382,8 @@ class SmartConsole:
         self.root.mainloop()
     
     def restart(self):
-        self.print("Done!")
+        self.allow_empty_message = True
+        self.input("Done! Press Send to continue...")
         self.display_main_menu()
     # endregion
     # region MESSAGES
@@ -338,7 +407,13 @@ class SmartConsole:
         # Define a handler that sets the variable when user presses Enter
         def on_enter(event=None):
             value = self.entry.get().strip()
+            send = False
             if value:  # only accept non-empty input
+                send = True
+            if self.allow_empty_message:
+                send = True
+                self.allow_empty_message = False
+            if send:
                 user_input.set(value)
                 self.__send_message(value)
                 self.entry.delete(0, tk.END)
@@ -430,7 +505,10 @@ class SmartConsole:
     # region DATABASE
     def database_connect(self, name: str, path: str, headers: tuple):
         database = Database(name, path, headers)
-        self.databases[name] = database
+        if not database.error:
+            self.databases[name] = database
+        else:
+            self.print(database.error)
     
     def database_insert(self, name: str, data: tuple):
         self.databases[name].insert(data)
