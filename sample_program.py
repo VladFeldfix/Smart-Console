@@ -5,7 +5,7 @@ import time
 class SampleProgram:
     def __init__(self):
         info = "This is a sample app to demonstrate the capabilities of the smart console tool"
-        self.sc = SmartConsole("Sample App", 1.0, info)
+        self.sc = SmartConsole("Sample App", 1.0, info, "BLUE")
         self.sc.add_main_menu_item("LOAD", self.progressbar)
         self.sc.add_main_menu_item("FILE", self.file)
         self.sc.add_main_menu_item("LOG", self.log)
