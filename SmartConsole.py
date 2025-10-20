@@ -1,403 +1,559 @@
-import os
-import sys
-import datetime
-from datetime import date as date_n
-import re
+# region private
+import tkinter as tk
+from tkinter import ttk
+from datetime import datetime
+import os 
 import subprocess
-from termcolor import colored
-import time
-os.system('cls')
+import platform
 
-class SmartConsole:
-    # CONSTRUCTOR
-    def __init__(self, name, version):
-        self.smart_console_version = "6"
-        self.software_version = version
-        self.title = name+" v"+self.software_version+"."+self.smart_console_version
-        self.main_menu = []
-        self.all_menu_functions = {}
-        self.__load_settings()
-        self.test_path("help.pdf")
-        self.test_path("software version history.pdf")
+COLOR1 = ""
+COLOR2 = ""
+COLOR3 = ""
+COLOR4 = ""
+COLOR5 = ""
 
-    # FLOW
-    def start(self):
-        # clear console
-        os.system('cls')
+class ChatBubble(tk.Frame):
+    """A single chat bubble widget."""
+    def __init__(self, master, message, sender="User"):
+        super().__init__(master, bg=master["bg"])
 
-        # display title
-        self.print("---"+"-"*len(self.title)+"---", 'cyan')
-        self.print("-- "+self.title+" --", 'cyan')
-        self.print("---"+"-"*len(self.title)+"---", 'cyan')
-
-        # display main menu
-        self.add_main_menu_item("SETTINGS", self.open_settings)
-        self.add_main_menu_item("HELP", self.help)
-        self.add_main_menu_item("SOFTWARE VERSION HISTORY", self.svh)
-        self.add_main_menu_item("EXIT", self.exit)
-        self.print("MAIN MENU:")
-        item = 0
-        options = {}
-        for name_function in self.main_menu:
-            name = name_function[0]
-            function = name_function[1]
-            item += 1
-            self.print(str(item)+". "+name)
-            options[str(item)] = function
-        
-        # get input
-        ans = self.input("Insert your choice")
-        if ans in options:
-            self.hr()
-            self.SELECTED_MAIN_MENU_ITEM = ans
-            options[ans]()
+        # Style colors
+        if sender == "User":
+            bg_color = "#DCF8C6"   # WhatsApp green bubble
+            anchor = "e"
+            padx = (50, 10)
         else:
-            self.error("Invalid selection")
-            self.restart()
-            return
-    
-    def selected_main_menu_item(self):
-        return int(self.SELECTED_MAIN_MENU_ITEM)
-    
-    def restart(self):
-        self.input("Press ENTER to restart")
-        self.start()
-    
-    def exit(self):
-        self.input("Press ENTER to exit")
-        os._exit(1)
-        sys.exit()
-    
-    # MAIN MENU
-    def add_main_menu_item(self, name, function):
-        if not name in self.all_menu_functions:
-            self.all_menu_functions[name] = function
-            self.main_menu.append((name, function))
+            bg_color = "#EAEAEA"   # WhatsApp gray bubble
+            anchor = "w"
+            padx = (10, 50)
 
-    # INPUT
-    def input(self, text):
-        ans = input(colored(text+" >", 'magenta'))
-        return ans
-    
-    def question(self, text):
-        ans = ""
-        while not ans in ("Y", "N"):
-            ans = self.input(text+" [Y/N]").upper()
-            if not ans in ("Y", "N"):
-                self.error("Invalid input")
-        return ans == "Y"
-    
-    def choose(self, text, options):
-        self.print(text)
-        item = 0
-        for op in options:
-            item += 1
-            self.print(str(item)+". "+op)
-        ans = ""
-        while not ans in range(1, item+1):
-            ans = self.input("Select your option")
-            try:
-                ans = int(ans)
-            except:
-                ans = 0
-            if not ans in range(1, item+1):
-                self.error("Invalid input")
-        return options[ans-1]
-        
+        # Force all bubbles to same width
+        self.columnconfigure(0, weight=1)
+        bubble = tk.Frame(self, bg=bg_color, bd=1, relief="solid")
+        bubble.grid(sticky="we", padx=padx, pady=5)  # grid allows width control
 
-    # OUTPUT
-    def print(self, *args):
-        txt = ""
-        col = "white"
-        txt = args[0]
-        if len(args) == 1:
-            print(txt)
-        if len(args) == 2:
-            col = args[1]
-            print(colored(txt, col))
-        if len(args) == 3:
-            col = args[1]
-            mark = args[2]
-            print(colored(txt, col, mark))
+        # Message label
+        msg_label = tk.Label(
+            bubble,
+            text=message,
+            font=("Arial", 12),
+            bg=bg_color,
+            wraplength=280,  # consistent wrap width
+            justify="left",  # controls multiline alignment
+            anchor="w"       # anchors the text to the left side
+        )
+        msg_label.pack(padx=10, pady=(5, 0), fill=tk.X)
 
-    def error(self, text):
-        self.print("[X] ERROR "+text, "red")
-    
-    def fatal_error(self, text):
-        self.print("[X] FATAL ERROR! "+text, "white", "on_red")
-        self.exit()
-    
-    def good(self, text):
-        self.print("[+] "+text, 'green')
+        # Timestamp
+        time_str = datetime.now().strftime("%H:%M")
+        time_label = tk.Label(
+            bubble,
+            text=time_str,
+            font=("Arial", 8),
+            bg=bg_color,
+            fg="gray"
+        )
+        time_label.pack(anchor="e", padx=8, pady=(0, 3))
 
-    def warning(self, text):
-        self.print("[!] WARNING "+text, 'yellow')
-
-    def hr(self):
-        self.print("-"*100)
+class Database:
+    def __init__(self, name: str, path: str, headers: tuple):
+        self.data = {}
+        self.path = path
+        self.full_path = self.path+"/"+name+".csv"
+        self.headers = headers
+        self.name = name
+        self.create()
     
-    # SETTINGS
-    def __load_settings(self):
-        # load settings.txt
-        if not os.path.isfile("settings.txt"):
-            self.fatal_error("Missing file settings.txt")
-        else:
-            self.__loaded_settings = {}
-            file = open("settings.txt", encoding='utf-8')
-            lines = file.readlines()
+    def create(self):
+        if not os.path.isfile(self.full_path):
+            header = ""
+            for column in self.headers:
+                header += column+","
+            header = header[:-1]
+            file = open(self.full_path, 'w')
+            file.write(header+"\n")
             file.close()
-            for line in lines:
-                line = line.replace("\n", "")
-                if ">" in line:
-                    line = line.split(">")
-                    if len(line) == 2:
-                        self.__loaded_settings[line[0].strip()] = line[1].strip()
-    
-    def open_settings(self):
-        os.popen("settings.txt")
-        self.print("Restarting the app to initiate new settings")
-        self.exit()
-
-    def get_setting(self, var):
-        if var in self.__loaded_settings:
-            return self.__loaded_settings[var]
-        else:
-            self.fatal_error("Missing setting: "+var)
-
-    # INFO
-    def help(self):
-        os.popen("help.pdf")
-        self.restart()
-    
-    def svh(self):
-        os.popen("software version history.pdf")
-        self.restart()
         
-    # FILE HANDLER
-    def test_path(self, path):
-        if not os.path.isdir(path) and not os.path.isfile(path):
-            self.fatal_error("Missing path: "+path)
+        self.load_data()
     
-    def open_folder(self, path):
-        FILEBROWSER_PATH = os.path.join(os.getenv('WINDIR'), 'explorer.exe')
-        cmd = os.path.normpath(path)
-        subprocess.run([FILEBROWSER_PATH, cmd])
-    
-    def load_csv(self, path):
-        self.test_path(path)
-        return_value = []
-        file = open(path, 'r')
+    def load_data(self):
+        if not os.path.isfile(self.full_path):
+            self.create()
+        
+        file = open(self.full_path, 'r')
+        headers = file.readline()
         lines = file.readlines()
         file.close()
 
         for line in lines:
             line = line.replace("\n", "")
             line = line.split(",")
-            row = []
-            for column in line:
-                row.append(column.strip())
-            return_value.append(row)
-        return return_value
+            self.data[line[0]] = line[1:]
     
-    def save_csv(self, path, data):
-        file = open(path, 'w', encoding='utf-8')
-        for row in data:
-            new_line = ""
-            for column in row:
-                new_line += str(column)+","
-            new_line[:-1]
-            file.write(new_line+"\n")
+    def insert(self, data):
+        self.data[data[0]] = data[1:]
+    
+    def delete(self, key):
+        if key in self.data:
+            del self.data[key]
+
+    def commit(self):
+        file = open(self.full_path, 'w')
+        txt = ""
+        for col in self.headers:
+            txt += col+","
+        txt = txt[:-1]
+        file.write(txt+"\n")
+        for pk, vals in self.data.items():
+            txt = ""
+            for val in vals:
+                txt += val+","
+            txt = txt[:-1]
+            file.write(pk+","+txt+"\n")
         file.close()
 
-    # SCRIPT
-    def run_script(self, path, functions):
-        self.test_path(path)
+class SmartConsole:
+    def __init__(self, application_name, application_rev, info):
+        # vars
+        self.main_menu_items = {}
+        self.application_name = application_name
+        self.application_rev = str(application_rev)
+        self.info = info
+        self.settings = {}
+        self.databases = {}
+        self.log = []
+        self.log_headers = []
+
+        # gui
+        self.root = tk.Tk()
+        self.root.title(self.application_name+" v"+self.application_rev)
+        self.root.geometry("400x600")
+        self.root.configure(bg="#ECE5DD")
+        self.root.resizable(False, False)
+        self.root.protocol("WM_DELETE_WINDOW", self.__exit)
+        self.byebye = False
+
+        # Top bar (like WhatsApp header)
+        header = tk.Frame(self.root, bg="#075E54", height=50)
+        header.pack(fill=tk.X)
+
+        tk.Label(
+            header,
+            text=self.application_name+" v"+self.application_rev,
+            bg="#075E54",
+            fg="white",
+            font=("Arial", 14, "bold")
+        ).pack(side=tk.LEFT, padx=15, pady=10)
+
+        # Chat area
+        self.chat_frame = tk.Frame(self.root, bg="#ECE5DD")
+        self.chat_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Progress Bar
+        self.progress_bar = ttk.Progressbar(self.root, orient="horizontal", mode="determinate")
+        self.progress_bar.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
+        
+        # Scrollbar
+        self.canvas = tk.Canvas(self.chat_frame, bg="#ECE5DD", highlightthickness=0)
+        self.scrollbar = tk.Scrollbar(self.chat_frame, command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas, bg="#ECE5DD")
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw", width=self.canvas.winfo_reqwidth())
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Keep bubbles full width on resize
+        self.canvas.bind("<Configure>", self.__update_frame_width)
+
+        # Input bar
+        self.input_frame = tk.Frame(self.root, bg="#FFFFFF", height=50)
+        self.input_frame.pack(fill=tk.X, side=tk.BOTTOM)
+
+        self.entry = tk.Entry(
+            self.input_frame,
+            font=("Arial", 12),
+            relief="flat",
+            bg="#FFFFFF"
+        )
+        self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 5), pady=10)
+        self.entry.focus()
+        self.entry.config(state="disabled")
+
+        self.send_btn = tk.Button(
+            self.input_frame,
+            text="Send",
+            font=("Arial", 11, "bold"),
+            bg="#25D366",
+            fg="white",
+            relief="flat",
+        )
+        self.send_btn.pack(side=tk.RIGHT, padx=(5, 10), pady=10)
+        self.send_btn.config(state="disabled")
+
+    def __update_frame_width(self, event):
+        """Ensure the scrollable frame always matches the canvas width."""
+        canvas_width = event.width
+        self.canvas_window = self.canvas.create_window(
+            (0, 0),
+            window=self.scrollable_frame,
+            anchor="nw",
+            width=self.canvas.winfo_reqwidth()
+        )
+        self.canvas.itemconfig(self.canvas_window, width=canvas_width)
+
+    def __add_message(self, message, sender="User"):
+        bubble = ChatBubble(self.scrollable_frame, message, sender)
+        bubble.pack(fill=tk.X, anchor="e" if sender == "User" else "w")
+        self.root.update_idletasks()
+        self.canvas.yview_moveto(1.0)
+
+    def __send_message(self, event=None):
+        msg = self.entry.get().strip()
+        if not msg:
+            return
+        self.__add_message(msg, sender="User")
+        self.entry.delete(0, tk.END)
+    
+    def __edit_settings(self):
+        for key, val in self.settings.items():
+            if self.question("The current value of "+key+" is: "+val+"\nWould you like to change it?"):
+                new_val = self.input("Insert new value for: "+key)
+                self.settings[key] = new_val
+                self.print("The new value of "+key+" is: "+new_val)
+        self.__save_settings()
+        self.restart()
+
+    def __save_settings(self):
+        file = open("settings.txt", 'w')
+        for key, val in self.settings.items():
+            file.write(key+" > "+val+"\n")
+        file.close()
+
+    def __load_settings(self):
+        file = open("settings.txt", 'a')
+        file.close()     
+        file = open("settings.txt", 'r')
+        lines = file.readlines()
+        file.close()
+        for line in lines:
+            if ">" in line:
+                line = line.split(">")
+                key = line[0].strip()
+                val = line[1].strip()
+                if key in self.settings:
+                    self.settings[key] = val
+        
+        self.__save_settings()
+
+    def __help(self):
+        os.popen("help.pdf")
+        self.restart()
+    
+    def __version_history(self):
+        os.popen("Software version history.pdf")
+        self.restart()
+
+    def __exit(self):
+        self.entry.delete(0, tk.END)
+        self.entry.config(state='disabled')
+        self.send_btn.config(state='disabled')
+        txt = "Good Bye"
+        if not self.byebye:
+            self.byebye = True
+            self.print(txt)
+        def close_program():
+            os._exit(0)
+            self.root.destroy()
+        self.root.after(2000, close_program)
+# endregion
+# region public
+    # region SETUP
+    def add_main_menu_item(self, function_name:str, function):
+        self.main_menu_items[function_name] = function
+
+    def add_settings_key(self, key:str):
+        self.settings[key] = "None"
+
+    def display_main_menu(self):
+        self.__load_settings()
+        txt = ""
+        txt += self.application_name+" v"+self.application_rev+"\n"
+        txt += self.info+"\n"
+        if len(self.settings) > 0:
+            self.main_menu_items["SETTINGS"] = self.__edit_settings
+            txt += "\nSettings:\n"
+            for key, val in self.settings.items():
+                txt += " * "+key+" > "+val+"\n"
+        
+        self.main_menu_items["HELP"] = self.__help
+        self.main_menu_items["VERSION HISTORY"] = self.__version_history
+        self.main_menu_items["EXIT"] = self.__exit
+        txt += "\nMain Menu:\n"
+        i = 0
+        options = {}
+        for key, val in self.main_menu_items.items():
+            i += 1
+            options[str(i)] = val
+            txt += "("+str(i)+") "+key+"\n"
+            
+        txt += "\nSelect your action"
+        ans = self.input(txt)
+
+        while not ans in options:
+            ans = self.input("Invalid choice")
+        options[ans]()
+
+    def launch(self):
+        self.root.mainloop()
+    
+    def restart(self):
+        self.print("Done!")
+        self.display_main_menu()
+    # endregion
+    # region MESSAGES
+    def print(self, txt: str):
+        self.__add_message(txt, sender="sc")
+
+    def input(self, prompt: str) -> str:
+        """
+        Simulate a blocking input() in Tkinter.
+        Shows a prompt in the chat and waits for user to enter text.
+        Returns the entered text.
+        """
+        # Show the prompt in the chat
+        self.__add_message(prompt, sender="Computer")
+        self.entry.config(state="normal")
+        self.send_btn.config(state="normal")
+
+        # Create a StringVar to hold the user's input
+        user_input = tk.StringVar()
+
+        # Define a handler that sets the variable when user presses Enter
+        def on_enter(event=None):
+            value = self.entry.get().strip()
+            if value:  # only accept non-empty input
+                user_input.set(value)
+                self.__send_message(value)
+                self.entry.delete(0, tk.END)
+                self.entry.config(state="disabled")
+                self.send_btn.config(state="disabled")
+
+        # Bind Enter key temporarily
+        self.entry.bind("<Return>", on_enter)
+        self.send_btn.configure(command=on_enter)
+
+        # Wait for the variable to be set
+        self.root.wait_variable(user_input)
+
+        # Unbind Enter key to restore normal behavior
+        self.entry.unbind("<Return>")
+
+        return user_input.get()
+    
+    def question(self, prompt: str):
+        ans = self.choose(prompt, ("YES","NO"))
+        return ans == "YES"
+
+    def choose(self, prompt:str, options:tuple):
+        # setup text
+        i = 0
+        txt = prompt+"\n"
+        available_options = []
+        for option in options:
+            i += 1
+            txt += "("+str(i)+") "+option+"\n"
+            available_options.append(str(i))
+        txt = txt[:-1]
+
+        # get input
+        choice = self.input(txt)
+        while not choice in available_options:
+            choice = self.input("Invalid choice")
+        
+        # return selected option
+        return options[int(choice)-1]
+
+    # endregion
+    # region SETTINGS
+    def get_settings_value(self, key: str):
+        return self.settings[key]
+    # endregion
+    # region LOADING BAR
+    def set_loading_bar(self, percent: int):
+        self.progress_bar['value'] = percent
+    # endregion
+    # region SCRIPT
+    def run_script(self, path: str, functions: dict):
+        # open file
+        if not os.path.isfile(path):
+            self.print("File not found: "+path)
+            return False
         file = open(path, 'r')
         lines = file.readlines()
         file.close()
-        script = []
-        ln = 0
-        if len(lines) > 0:
-            for line in lines:
-                ln += 1
-                line = line.replace("\n", "")
-                if len(line) > 0:
-                    tmp = line.split("(")
-                    if len(tmp) == 2:
-                        function_name = tmp[0].strip()
-                        arguments = tmp[1]
-                        if function_name in functions:
-                            function = functions[function_name][0]
-                            arguments = arguments.replace(")", "")
-                            arguments = arguments.split(",")
-                            args = []
-                            for arg in arguments:
-                                if arg != "":
-                                    args.append(arg.strip())
-                            if len(args) == len(functions[function_name][1]):
-                                script.append((function, args))
-                            else:
-                                self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\n"+line+"\nExpected "+str(functions[function_name][1])+" arguments"+"\nGiven "+str(len(args))+" arguments")
-                        else:
-                            self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\n"+line+"\nUnknown function: "+function_name)
-                    else:
-                        self.fatal_error("IN SCRIPT: "+path+"\nLine #"+str(ln)+"\n"+line+"\nSyntax error")
-            for line in script:
-                line[0](line[1])
-        else:
-            self.fatal_error("in script: "+path+"\nEmpty script")
 
-    # DATABASES
-    def save_database(self, path, data):
-        self.test_path(path)
-        file = open(path, 'w')
-        for key, values in data.items():
-            valstowrite = ""
-            for val in values:
-                valstowrite += val+","
-            valstowrite = valstowrite[:-1]
-            file.write(str(key)+","+valstowrite+"\n")
-        file.close()
-
-    def load_database(self, path, headers):
-        return_value = {}
-        self.test_path(path)
-        file = open(path, 'r')
-        lines = file.readlines()
-        file.close()
+        # read script
         ln = 0
-        if len(lines) > 0:
-            for line in lines:
-                ln += 1
-                line = line.replace("\n", "")
-                line = line.split(",")
-                if len(line) != len(headers):
-                    self.fatal_error("in file: "+path+"\nIn line #"+str(ln)+"\nIncorrect number of values\nMake the file according to the following format:\n"+str(headers))
-                else:
-                    if ln == 1:
-                        i = 0
-                        for h in line:
-                            if h != headers[i]:
-                                self.fatal_error("in file: "+path+"\nIn line #"+str(ln)+"\nInvalid header\nGiven: '"+h+"' Expected: '"+headers[i]+"'")
-                            i += 1
-                    key = line[0]
-                    values = line[1:]
-                    if not key in return_value:
-                        return_value[key] = values
-                    else:
-                        self.fatal_error("in file: "+path+"\nIn line #"+str(ln)+"\nPrimary key: "+key+" is not unique")
-        else:
+        for line in lines:
             ln += 1
-            self.fatal_error("in file: "+path+"\nIn line #"+str(ln)+"\nFile is empty")
-        return return_value
+            if "(" in line:
+                line = line.replace("\n", "")
+                line = line.replace(")", "")
+                line = line.split("(")
+                command = line[0].strip()
+                if not command in functions:
+                    self.print("Error in script: "+path+"\nUnknown command: "+command+"\nIn line: "+str(ln))
+                    return False
+                arguments = []
+                for argument in line[1].strip().split(","):
+                    arguments.append(argument.strip())
+                if len(arguments) == 1 and arguments[0] == "":
+                    arguments = []
+                if len(arguments) != len(functions[command][1]):
+                    self.print("Error in script: "+path+"\nInvalid number of arguments for command: "+command+"\nIn line: "+str(ln)+"\nExpected number of arguments: "+str(len(functions[command][1]))+"\n"+str(functions[command][1])+"\nGiven number of arguments: "+str(len(arguments))+"\n"+str(arguments))
+                    return False
+                if len(arguments) > 0:
+                    functions[command][0](arguments)
+                else:
+                    functions[command][0]()
 
-    def invert_database(self, database):
-        return_value = {}
-        for key, value in database.items():
-            if type(key) != str and type(key) != int:
-                key = str(key)
-            return_value[value] = key
-        return return_value
-
-    # DATE
-    def today(self):
-        # get today
-        now = datetime.datetime.now()
-        yyyy = str(now.year)
-        mm = str(now.month).zfill(2)
-        dd = str(now.day).zfill(2)
-        return yyyy+"-"+mm+"-"+dd
+        # all good
+        return True
+    # endregion
+    # region DATABASE
+    def database_connect(self, name: str, path: str, headers: tuple):
+        database = Database(name, path, headers)
+        self.databases[name] = database
     
-    def current_year(self):
-        now = datetime.datetime.now()
-        return str(now.year)
-
-    def current_month(self):
-        now = datetime.datetime.now()
-        return str(now.month).zfill(2)
-
-    def current_day(self):
-        now = datetime.datetime.now()
-        return str(now.day).zfill(2)
-
-    def current_week(self):
-        return str(datetime.date(datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day).isocalendar().week).zfill(2)
+    def database_insert(self, name: str, data: tuple):
+        self.databases[name].insert(data)
     
-    def current_weekday(self):
-        return str(datetime.datetime.today().weekday())
+    def database_commit(self, name: str):
+        self.databases[name].commit()
+
+    def database_delete(self, name: str, key: str):
+        self.databases[name].delete(key)
     
-    def now(self):
-        now = datetime.datetime.now()
-        hh = str(now.hour).zfill(2)
-        mm = str(now.minute).zfill(2)
-        return hh+":"+mm
+    def database_data(self, name: str):
+        return self.databases[name].data.items()
 
-    def right_now(self):
-        now = datetime.datetime.now()
-        hh = str(now.hour).zfill(2)
-        mm = str(now.minute).zfill(2)
-        ss = str(now.second).zfill(2)
-        return hh+":"+mm+":"+ss
+    def database_headers(self, name: str):
+        return self.databases[name].headers
+    # endregion
+    # region TIME
+    def today(self) -> str:
+        """Returns the current date in YYYY-MM-DD format."""
+        return datetime.now().strftime("%Y-%m-%d")
+    
+    def now(self) -> str:
+        """Returns the current time in HH:MM:SS format."""
+        return datetime.now().strftime("%H:%M:%S")
 
-    def current_hour(self):
-        now = datetime.datetime.now()
-        return str(now.hour).zfill(2)
+    def current_year(self) -> str:
+        """Returns the current year in YYYY format."""
+        return datetime.now().strftime("%Y")
 
-    def current_minute(self):
-        now = datetime.datetime.now()
-        return str(now.minute).zfill(2)
+    def current_month(self) -> str:
+        """Returns the current month in MM format."""
+        return datetime.now().strftime("%m")
 
-    def current_second(self):
-        now = datetime.datetime.now()
-        return str(now.second).zfill(2)
+    def current_day(self) -> str:
+        """Returns the current day in DD format."""
+        return datetime.now().strftime("%d")
 
-    def current_millisecond(self):
-        return str(round(time.time() * 1000))[-3:-1]
+    def current_hour(self) -> str:
+        """Returns the current hour in HH format."""
+        return datetime.now().strftime("%H")
 
-    def current_time(self):
-        return self.right_now()+":"+self.current_millisecond()
+    def current_minute(self) -> str:
+        """Returns the current minute in MM format."""
+        return datetime.now().strftime("%M")
 
-    def test_date(self, givenDate):
-        # make sure the format is correct
-        tmp = givenDate.replace("-","")
-        tmp = re.sub('[^0-9]','', tmp)
-        if len(tmp) < 8:
-            self.error("Invalid date format: "+givenDate)
-            return False
-        
-        # test year format
-        YYYY = int(tmp[0:4])
-        if not YYYY in range(0,10000):
-            self.error("Invalid year format: "+str(YYYY)+" acceptable range 0-9999")
-            return False
-        YYYY = str(YYYY)
-        YYYY = YYYY.zfill(4)
+    def current_second(self) -> str:
+        """Returns the current second in SS format."""
+        return datetime.now().strftime("%S")
 
-        # test month format
-        MM = int(tmp[4:6])
-        if not MM in range(1,13):
-            self.error("Invalid month format: "+str(MM)+" acceptable range 1-12")
-            return False
-        MM = str(MM)
-        MM = MM.zfill(2)
-
-        # test day format
-        DD = int(tmp[6:8])
-        if not DD in range(1,32):
-            self.error("Invalid day format: "+str(DD)+" acceptable range 1-31")
-            return False
-        DD = str(DD)
-        DD = DD.zfill(2)
-        
-        # return true if date is good
+    def compare_dates(self, date1: str, date2: str) -> int:
+        """
+        Returns the number of days between date1 and date2.
+        Dates must be in 'YYYY-MM-DD' format.
+        """
+        d1 = datetime.strptime(date1, "%Y-%m-%d")
+        d2 = datetime.strptime(date2, "%Y-%m-%d")
+        return (d2 - d1).days
+    # endregion
+    # region LOG
+    def write_to_log(self, txt: str):
+        self.log.append(txt)
+    
+    def add_log_header(self, header: str):
+        self.log_headers.append(header)
+    
+    def display_log(self):
+        file = open("Log.html", 'w')
+        file.write('<!DOCTYPE html>\n')
+        file.write('<html lang="en">\n')
+        file.write('<head>\n')
+        file.write('    <meta charset="UTF-8">\n')
+        file.write('    <title>Log</title>\n')
+        file.write('    <style>\n')
+        file.write('        body {\n')
+        file.write('            font-family: "Courier New", "Courier", "monospace";\n')
+        file.write('        }\n')
+        file.write('    </style>\n')
+        file.write('</head>\n')
+        file.write('<body>\n')
+        file.write('    <h1>'+self.application_name+' v'+self.application_rev+'</h1>\n')
+        file.write('    <b><text>Date: '+self.today()+' '+self.now()+'</text><br>\n')
+        if len(self.log_headers) > 0:
+            for header in self.log_headers:
+                file.write('    <text>'+header+'</text><br>\n')
+        if len(self.settings) > 0:
+            file.write('    <text>Settings:</text><br>\n')
+            file.write('    <ul>\n')
+            for key, val in self.settings.items():
+                file.write('        <li>'+key+' > '+val+'</li>\n')
+            file.write('    </ul></b>\n')
+            file.write('    <hr>\n')
+        i = 0
+        for line in self.log:
+            i += 1
+            file.write('    <text>['+str(i)+'] '+line+'</text><br>\n')
+        file.write('</body>\n')
+        file.write('</html>\n')
+        file.close()
+        os.popen("Log.html")
+    # endregion
+    # region FILES
+    def test_paths(self, paths: tuple):
+        for path in paths:
+            if not os.path.isfile(path) and not os.path.isdir(path):
+                self.print("Error! Path not found: "+path)
+                return False
         return True
 
-    def compare_dates(self, firstDate, secondDate):
-        if self.test_date(firstDate) and self.test_date(secondDate):
-            firstDate = firstDate.replace("-","")
-            secondDate = secondDate.replace("-","")
-            date1 = date_n(int(firstDate[0:4]), int(firstDate[4:6]), int(firstDate[6:8]))
-            date2 = date_n(int(secondDate[0:4]), int(secondDate[4:6]), int(secondDate[6:8]))
-            return (date1 - date2).days
-        else:
-            return 0
+    def open(self, path: str):
+        """
+        Attempts to open the specified file or folder in the system's file explorer.
+        Returns True if successful, False otherwise.
+        """
+        try:
+            if platform.system() == "Windows":
+                os.startfile(path)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", path])
+            else:  # Linux and other Unix-like systems
+                subprocess.run(["xdg-open", path])
+            return True
+        except Exception as e:
+            self.print(str(e))
+            return False
+    # endregion
+# endregion
