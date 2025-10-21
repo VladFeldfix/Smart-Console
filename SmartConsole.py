@@ -133,8 +133,6 @@ class Database:
                 file.close()
             except Exception as e:
                 self.error = str(e)
-            
-        self.load_data()
     
     def load_data(self):
         if not os.path.isfile(self.full_path):
