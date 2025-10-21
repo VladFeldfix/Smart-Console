@@ -346,7 +346,21 @@ class SmartConsole:
             os._exit(0)
             self.root.destroy()
         self.root.after(2000, close_program)
+    
+    def __is_leap_year(self, year):
+        return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
+    def __is_valid_date(self, day, month, year):
+        if year < 1 or month < 1 or month > 12 or day < 1:
+            return False
+
+        # Days in each month
+        month_days = [31, 29 if self.__is_leap_year(year) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+        return day <= month_days[month - 1]
+
+    # endregion
+    # region SETUP
     def add_main_menu_item(self, function_name:str, function):
         self.main_menu_items[function_name] = function
 
@@ -458,6 +472,29 @@ class SmartConsole:
         
         # return selected option
         return options[int(choice)-1]
+
+    def input_date(self, txt: str):
+        ans = self.input(txt)
+        ok = False
+        while not ok:
+            if "-" in ans:
+                original_date = ans
+                ans = ans.split("-")
+                if len(ans) == 3:
+                    year = ans[0]
+                    month = ans[1]
+                    day = ans[2]
+                    try:
+                        year = int(year)
+                        month = int(month)
+                        day = int(day)
+                        if self.__is_valid_date(day, month, year):
+                            ok = True
+                    except:
+                        pass
+            if not ok:
+                ans = self.input("Invalid date format")
+        return original_date
 
     # endregion
     # region SETTINGS
