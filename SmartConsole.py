@@ -158,19 +158,22 @@ class Database:
             del self.data[key]
 
     def commit(self):
-        file = open(self.full_path, 'w')
-        txt = ""
-        for col in self.headers:
-            txt += col+","
-        txt = txt[:-1]
-        file.write(txt+"\n")
-        for pk, vals in self.data.items():
+        try:
+            file = open(self.full_path, 'w')
             txt = ""
-            for val in vals:
-                txt += str(val)+","
+            for col in self.headers:
+                txt += col+","
             txt = txt[:-1]
-            file.write(str(pk)+","+txt+"\n")
-        file.close()
+            file.write(txt+"\n")
+            for pk, vals in self.data.items():
+                txt = ""
+                for val in vals:
+                    txt += str(val)+","
+                txt = txt[:-1]
+                file.write(str(pk)+","+txt+"\n")
+            file.close()
+        except Exception as e:
+            self.error = str(e)
 # endregion
 # region OBJ SC
 class SmartConsole:
@@ -477,26 +480,9 @@ class SmartConsole:
 
     def input_date(self, txt: str):
         ans = self.input(txt)
-        ok = False
-        while not ok:
-            if "-" in ans:
-                original_date = ans
-                ans = ans.split("-")
-                if len(ans) == 3:
-                    year = ans[0]
-                    month = ans[1]
-                    day = ans[2]
-                    try:
-                        year = int(year)
-                        month = int(month)
-                        day = int(day)
-                        if self.__is_valid_date(day, month, year):
-                            ok = True
-                    except:
-                        pass
-            if not ok:
-                ans = self.input("Invalid date format")
-        return original_date
+        while not self.test_date(ans):
+            ans = self.input("Invalid date format")
+        return ans
     
     def input_int(self, txt: str):
         ans = self.input(txt)
@@ -566,12 +552,18 @@ class SmartConsole:
             self.databases[name] = database
         else:
             self.print(database.error)
+            database.error = None
     
     def database_insert(self, name: str, data: tuple):
         self.databases[name].insert(data)
     
     def database_commit(self, name: str):
         self.databases[name].commit()
+        if not self.databases[name].error:
+            self.print("Changes to database "+name+" committed successfully!")
+        else:
+            self.print(self.databases[name].error)
+            self.databases[name].error = None
 
     def database_delete(self, name: str, key: str):
         self.databases[name].delete(key)
@@ -631,6 +623,26 @@ class SmartConsole:
         d1 = datetime.strptime(date1, "%Y-%m-%d")
         d2 = datetime.strptime(date2, "%Y-%m-%d")
         return (d2 - d1).days
+    
+    def test_date(self, date: str):
+        if "-" in date:
+            date = date.split("-")
+            if len(date) == 3:
+                year = date[0]
+                month = date[1]
+                day = date[2]
+                try:
+                    year = int(year)
+                    month = int(month)
+                    day = int(day)
+                    if self.__is_valid_date(day, month, year):
+                        return True
+                except:
+                    return False
+            else:
+                return False
+        else:
+            return False
     # endregion
     # region LOG
     def write_to_log(self, txt: str):
