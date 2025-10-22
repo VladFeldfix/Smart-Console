@@ -67,7 +67,7 @@ class color_pack:
 # region OBJ CHAT BUBBLE
 class ChatBubble(tk.Frame):
     """A single chat bubble widget."""
-    def __init__(self, master, message, color_pack, sender="User"):
+    def __init__(self, master, message, color_pack, size, sender="User"):
         super().__init__(master, bg=master["bg"])
 
         # Style colors
@@ -88,12 +88,14 @@ class ChatBubble(tk.Frame):
         bubble.grid(sticky="we", padx=padx, pady=5)  # grid allows width control
 
         # Message label
+        size = size.split("x")
+        width = int(size[0])
         msg_label = tk.Label(
             bubble,
             text=message,
             font=("Arial", 12),
             bg=bg_color,
-            wraplength=280,  # consistent wrap width
+            wraplength=width*0.81,  # consistent wrap width
             justify="left",  # controls multiline alignment
             anchor="w"       # anchors the text to the left side
         )
@@ -133,21 +135,21 @@ class Database:
                 file.close()
             except Exception as e:
                 self.error = str(e)
+        self.load_data()
     
     def load_data(self):
-        if not os.path.isfile(self.full_path):
-            self.create()
-        
-        file = open(self.full_path, 'r')
-        headers = file.readline()
-        lines = file.readlines()
-        file.close()
+        try:
+            file = open(self.full_path, 'r')
+            headers = file.readline()
+            lines = file.readlines()
+            file.close()        
+            for line in lines:
+                line = line.replace("\n", "")
+                line = line.split(",")
+                self.data[line[0]] = line[1:]
+        except Exception as e:
+            self.error = str(e)
 
-        for line in lines:
-            line = line.replace("\n", "")
-            line = line.split(",")
-            self.data[line[0]] = line[1:]
-    
     def insert(self, data):
         self.data[data[0]] = data[1:]
     
@@ -165,16 +167,17 @@ class Database:
         for pk, vals in self.data.items():
             txt = ""
             for val in vals:
-                txt += val+","
+                txt += str(val)+","
             txt = txt[:-1]
-            file.write(pk+","+txt+"\n")
+            file.write(str(pk)+","+txt+"\n")
         file.close()
 # endregion
 # region OBJ SC
 class SmartConsole:
-    def __init__(self, application_name, application_rev, info, color):
-        # theme color
+    def __init__(self, application_name: str, application_rev, info: str, color: str, size: str):
+        # theme
         self.color_pack = color_pack(color)
+        self.size = size
 
         # vars
         self.main_menu_items = {}
@@ -190,7 +193,7 @@ class SmartConsole:
         # gui
         self.root = tk.Tk()
         self.root.title(self.application_name+" v"+self.application_rev)
-        self.root.geometry("400x600")
+        self.root.geometry(self.size)
         self.root.configure(bg=self.color_pack.COLOR_OUTER_MENU)
         self.root.resizable(False, False)
         self.root.protocol("WM_DELETE_WINDOW", self.__exit)
@@ -281,7 +284,7 @@ class SmartConsole:
         self.canvas.itemconfig(self.canvas_window, width=canvas_width)
 
     def __add_message(self, message, sender="User"):
-        bubble = ChatBubble(self.scrollable_frame, message, self.color_pack, sender)
+        bubble = ChatBubble(self.scrollable_frame, message, self.color_pack, self.size, sender)
         bubble.pack(fill=tk.X, anchor="e" if sender == "User" else "w")
         self.root.update_idletasks()
         self.canvas.yview_moveto(1.0)
@@ -310,7 +313,7 @@ class SmartConsole:
 
     def __load_settings(self):
         file = open("settings.txt", 'a')
-        file.close()     
+        file.close()
         file = open("settings.txt", 'r')
         lines = file.readlines()
         file.close()
@@ -364,6 +367,7 @@ class SmartConsole:
 
     def add_settings_key(self, key:str):
         self.settings[key] = "None"
+        self.__load_settings()
 
     def display_main_menu(self):
         self.__load_settings()
@@ -493,6 +497,20 @@ class SmartConsole:
             if not ok:
                 ans = self.input("Invalid date format")
         return original_date
+    
+    def input_int(self, txt: str):
+        ans = self.input(txt)
+        ok = False
+        while not ok:
+            try:
+                ans = int(ans)
+                ok = True
+            except:
+                pass
+
+            if not ok:
+                ans = self.input("Invalid input")
+        return ans
 
     # endregion
     # region SETTINGS
@@ -559,10 +577,18 @@ class SmartConsole:
         self.databases[name].delete(key)
     
     def database_data(self, name: str):
-        return self.databases[name].data.items()
+        if name in self.databases:
+            return self.databases[name].data
+        else:
+            self.print("Failed to connect to database: "+name)
+            return None
 
     def database_headers(self, name: str):
-        return self.databases[name].headers
+        if name in self.databases:
+            return self.databases[name].headers
+        else:
+            self.print("Failed to connect to database: "+name)
+            return None
     # endregion
     # region TIME
     def today(self) -> str:
