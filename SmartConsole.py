@@ -370,7 +370,6 @@ class SmartConsole:
 
     def add_settings_key(self, key:str):
         self.settings[key] = "None"
-        self.__load_settings()
 
     def display_main_menu(self):
         self.__load_settings()
