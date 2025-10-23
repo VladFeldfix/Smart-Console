@@ -625,9 +625,12 @@ class SmartConsole:
         Returns the number of days between date1 and date2.
         Dates must be in 'YYYY-MM-DD' format.
         """
-        d1 = datetime.strptime(date1, "%Y-%m-%d")
-        d2 = datetime.strptime(date2, "%Y-%m-%d")
-        return (d2 - d1).days
+        if self.test_date(date1) and self.test_date(date2):
+            d1 = datetime.strptime(date1, "%Y-%m-%d")
+            d2 = datetime.strptime(date2, "%Y-%m-%d")
+            return (d2 - d1).days
+        else:
+            return 0
     
     def test_date(self, date: str):
         if "-" in date:
@@ -695,7 +698,7 @@ class SmartConsole:
     def test_paths(self, paths: tuple):
         for path in paths:
             if not os.path.isfile(path) and not os.path.isdir(path):
-                self.print("Error! Path not found: "+path)
+                self.print("Path not found: "+path)
                 return False
         return True
 
