@@ -174,6 +174,9 @@ class Database:
             file.close()
         except Exception as e:
             self.error = str(e)
+    
+    def empty(self):
+        self.data = {}
 # endregion
 # region OBJ SC
 class SmartConsole:
@@ -566,6 +569,9 @@ class SmartConsole:
 
     def database_delete(self, name: str, key: str):
         self.databases[name].delete(key)
+    
+    def database_delete_all(self, name: str):
+        self.databases[name].empty()
     
     def database_data(self, name: str):
         if name in self.databases:
